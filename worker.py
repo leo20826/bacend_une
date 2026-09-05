@@ -58,9 +58,11 @@ def _procesar_canal(canal: str, provincia: str | None):
         logger.exception("Error obteniendo mensajes del canal %s", canal)
         return
 
+    nuevos = 0
     for msg in mensajes:
         if db.ya_procesado(msg.message_id):
             continue
+        nuevos += 1
 
         parte = parse_mensaje(msg.texto)
 
@@ -101,6 +103,11 @@ def _procesar_canal(canal: str, provincia: str | None):
                 )
 
         db.marcar_procesado(canal, msg.message_id)
+
+    logger.info(
+        "Canal %s: %d mensajes revisados, %d nuevos procesados.",
+        canal, len(mensajes), nuevos,
+    )
 
 
 def _guardar_y_notificar(

@@ -8,6 +8,7 @@ Si en el futuro necesitas más volumen o canales privados, la alternativa
 es Telethon/Pyrogram con una cuenta dedicada.
 """
 
+import logging
 import requests
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
@@ -15,6 +16,8 @@ from datetime import datetime
 from dateutil import parser as dateparser
 
 from config import HTTP_USER_AGENT
+
+logger = logging.getLogger("scraper")
 
 
 @dataclass
@@ -48,9 +51,25 @@ def obtener_mensajes(canal: str, limite: int = 20) -> list[MensajeCrudo]:
     resp.raise_for_status()
 
     soup = BeautifulSoup(resp.text, "html.parser")
-    mensajes = []
 
-    for wrap in soup.select("div.tgme_widget_message_wrap"):
+    wraps = soup.select("div.tgme_widget_message_wrap")
+    logger.info(
+        "Canal %s: status=%d, largo_html=%d, mensajes_encontrados=%d",
+        canal, resp.status_code, len(resp.text), len(wraps),
+    )
+    if len(wraps) == 0:
+        # No debería pasar nunca en un canal activo real. Si ves esto en
+        # los logs, Telegram probablemente está devolviendo una página
+        # distinta a la esperada (bloqueo por IP/hosting, cambio de
+        # estructura HTML, o el canal no existe/está mal escrito).
+        # Se loguea un fragmento del HTML crudo para poder diagnosticarlo.
+        logger.warning(
+            "Canal %s: 0 mensajes detectados. Primeros 500 caracteres del HTML: %s",
+            canal, resp.text[:500].replace("\n", " "),
+        )
+
+    mensajes = []
+    for wrap in wraps:
         msg_div = wrap.select_one("div.tgme_widget_message")
         if msg_div is None:
             continue
@@ -86,6 +105,7 @@ if __name__ == "__main__":
     # Prueba manual rápida: python scraper.py <canal>
     import sys
 
+    logging.basicConfig(level=logging.INFO)
     canal_prueba = sys.argv[1] if len(sys.argv) > 1 else "EmpresaElectricaDeLaHabana"
     for m in obtener_mensajes(canal_prueba, limite=5):
         print("=" * 60)
