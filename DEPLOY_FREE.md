@@ -49,6 +49,16 @@ Crea un repo nuevo en GitHub (puede ser privado) y sube ("push") el código.
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn api:app --host 0.0.0.0 --port $PORT`
    - **Plan**: Free
+
+   **Importante**: el repo incluye un archivo `runtime.txt` que le dice a
+   Render que use Python 3.12 en vez de la versión más nueva por defecto.
+   Esto es necesario porque `psycopg2-binary` (el driver de Postgres) no
+   siempre tiene binarios listos para versiones de Python recién salidas,
+   lo que puede causar un error de arranque tipo
+   `undefined symbol: _PyInterpreterState_Get`. Si after de todos modos
+   ves ese error en los logs, agrega manualmente en Render → **Settings →
+   Environment** la variable `PYTHON_VERSION` con valor `3.12.6`, y vuelve
+   a desplegar.
 4. En **Environment** (variables de entorno), agrega:
 
    | Variable | Valor |

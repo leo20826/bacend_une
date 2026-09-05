@@ -17,8 +17,8 @@ import json
 from contextlib import contextmanager
 from datetime import datetime
 
-import psycopg2
-import psycopg2.extras
+import psycopg
+from psycopg.rows import dict_row
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -64,7 +64,7 @@ def init_db():
 
 @contextmanager
 def _conectar():
-    con = psycopg2.connect(DATABASE_URL)
+    con = psycopg.connect(DATABASE_URL)
     try:
         yield con
         con.commit()
@@ -165,7 +165,7 @@ def _row_a_dict(row: dict) -> dict:
 
 def obtener_parte_general_mas_reciente() -> dict | None:
     with _conectar() as con:
-        with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with con.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 "SELECT * FROM partes WHERE tipo = 'general_nacional' "
                 "ORDER BY fecha DESC LIMIT 1"
@@ -178,7 +178,7 @@ def obtener_partes_por_zona(
     provincia: str, municipio: str | None = None, limite: int = 20
 ) -> list[dict]:
     with _conectar() as con:
-        with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with con.cursor(row_factory=dict_row) as cur:
             if municipio:
                 cur.execute(
                     """
