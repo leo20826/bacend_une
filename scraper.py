@@ -69,23 +69,31 @@ def obtener_mensajes(canal: str, limite: int = 20) -> list[MensajeCrudo]:
         )
 
     mensajes = []
+    descartados_sin_id = 0
+    descartados_sin_texto = 0
+    descartados_sin_fecha = 0
+
     for wrap in wraps:
         msg_div = wrap.select_one("div.tgme_widget_message")
         if msg_div is None:
+            descartados_sin_id += 1
             continue
 
         message_id = msg_div.get("data-post")  # "canal/12345"
         if not message_id:
+            descartados_sin_id += 1
             continue
 
         texto_div = msg_div.select_one("div.tgme_widget_message_text")
         if texto_div is None:
             # Puede ser un mensaje solo con imagen/video, sin texto: se ignora.
+            descartados_sin_texto += 1
             continue
         texto = _limpiar_texto(texto_div)
 
         time_tag = msg_div.select_one("time.tgme_widget_message_date time")
         if time_tag is None or not time_tag.get("datetime"):
+            descartados_sin_fecha += 1
             continue
         fecha = dateparser.isoparse(time_tag["datetime"])
 
@@ -96,6 +104,15 @@ def obtener_mensajes(canal: str, limite: int = 20) -> list[MensajeCrudo]:
                 texto=texto,
                 fecha=fecha,
             )
+        )
+
+    if wraps and not mensajes:
+        logger.warning(
+            "Canal %s: de %d mensajes encontrados, TODOS fueron descartados "
+            "(sin_id=%d, sin_texto=%d, sin_fecha=%d). Revisando el primer "
+            "wrap crudo (primeros 800 caracteres): %s",
+            canal, len(wraps), descartados_sin_id, descartados_sin_texto,
+            descartados_sin_fecha, str(wraps[0])[:800].replace("\n", " "),
         )
 
     return mensajes[-limite:]
