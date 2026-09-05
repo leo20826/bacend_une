@@ -91,7 +91,7 @@ def obtener_mensajes(canal: str, limite: int = 20) -> list[MensajeCrudo]:
             continue
         texto = _limpiar_texto(texto_div)
 
-        time_tag = msg_div.select_one("time.tgme_widget_message_date time")
+        time_tag = msg_div.select_one("a.tgme_widget_message_date time")
         if time_tag is None or not time_tag.get("datetime"):
             descartados_sin_fecha += 1
             continue
