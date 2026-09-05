@@ -1,0 +1,19 @@
+name: Disparar scraping periódico
+
+# Corre cada 10 minutos. GitHub Actions no garantiza el minuto exacto
+# (puede haber unos minutos de retraso en momentos de mucha carga), pero
+# para este caso de uso es más que suficiente.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}  # permite dispararlo manualmente desde GitHub también
+
+jobs:
+  disparar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar al endpoint /api/scrape-now
+        run: |
+          curl -sf -X POST "${{ secrets.BACKEND_URL }}/api/scrape-now?token=${{ secrets.SCRAPE_TOKEN }}" \
+            --max-time 60 \
+            || echo "El intento falló o el servicio tardó en despertar; el próximo intento en 10 min lo resuelve."
