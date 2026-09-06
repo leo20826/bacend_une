@@ -80,7 +80,17 @@ def notificar_parte_nuevo(*, provincia: str, municipio: str | None, tipo: str, r
         enviar_a_topic("nacional", "Parte eléctrico nacional", resumen)
         return
 
-    titulo = "Corte de servicio" if tipo == "corte" else "Servicio restablecido"
+    if tipo == "corte":
+        titulo = "Corte de servicio"
+    elif tipo == "restablecimiento":
+        titulo = "Servicio restablecido"
+    else:
+        # sin_clasificar: NO asumir que es un restablecimiento (ese era el
+        # bug: antes cualquier tipo distinto de "corte" se etiquetaba como
+        # "Servicio restablecido", incluso avisos de corte que el parser
+        # no logró clasificar). Un título neutro es más seguro que adivinar.
+        titulo = "Aviso del servicio eléctrico"
+
     enviar_a_topic(f"provincia_{normalizar_topic(provincia)}", titulo, resumen)
     if municipio:
         enviar_a_topic(f"municipio_{normalizar_topic(municipio)}", titulo, resumen)

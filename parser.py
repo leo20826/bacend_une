@@ -65,21 +65,46 @@ class ParteParseado:
 def _clasificar(texto: str) -> str:
     t = texto.lower()
 
-    # Señales de parte general nacional: menciona MW / déficit / disponibilidad
-    # sin hablar de circuitos ni subestaciones puntuales.
-    if ("mw" in t or "déficit" in t or "deficit" in t) and "circuito" not in t:
+    # Señal de parte general nacional: cifras explícitas de MW (déficit,
+    # disponibilidad o demanda), y que NO mencione circuitos/municipios
+    # puntuales (para no confundirlo con un aviso local que solo dice
+    # "por déficit de generación" como causa, sin cifras numéricas).
+    tiene_cifras_mw = bool(
+        _RE_DEFICIT.search(texto)
+        or _RE_DISPONIBILIDAD.search(texto)
+        or _RE_DEMANDA.search(texto)
+    )
+    if tiene_cifras_mw and "circuito" not in t and "municipio" not in t:
         return TIPO_GENERAL_NACIONAL
 
-    if "🛑" in texto or "circuitos afectados" in t:
-        return TIPO_CORTE
-
-    if "📣" in texto and ("restablecido" in t or "restablecimiento" in t):
+    # Señales de RESTABLECIMIENTO (el servicio ya fue reparado/normalizado).
+    # Se revisan ANTES que las de corte para que frases como "queda
+    # reparada" no caigan por error en las señales de corte de abajo.
+    palabras_restablecido = (
+        "restablecido", "restablecimiento", "restablece", "queda repara",
+        "quedó reparad", "reparada", "reparado", "resuelta la avería",
+        "resuelta la averia", "solucionada", "normalizado el servicio",
+    )
+    if any(p in t for p in palabras_restablecido):
         return TIPO_RESTABLECIMIENTO
 
-    if "⚠️" in texto or "⚡" in texto:
-        # Tiene los emojis típicos de aviso pero no matcheó los patrones
-        # de arriba; lo tratamos como corte por defecto (es el caso más común)
-        # pero queda disponible el texto crudo para revisión manual.
+    # Señales de CORTE: el vocabulario real del canal es más variado que
+    # solo "🛑circuitos afectados" — incluye avisos de disparo, avería,
+    # afectación puntual, déficit de generación como causa, etc.
+    palabras_corte = (
+        "circuitos afectados", "se afecta", "se afectó", "afecta el servicio",
+        "afectan por disparo", "disparo del circuito", "disparo automático",
+        "disparo automatico", "por avería", "por averia",
+        "déficit de generación", "deficit de generacion",
+    )
+    if "🛑" in texto or any(p in t for p in palabras_corte):
+        return TIPO_CORTE
+
+    if "⚠️" in texto or "⚡" in texto or "🚨" in texto or "🚧" in texto:
+        # Tiene emojis típicos de aviso pero no matcheó ninguna frase
+        # conocida arriba; se trata como corte por defecto (es el caso
+        # más común en este canal), pero el texto crudo queda disponible
+        # siempre para revisión manual si el default resulta incorrecto.
         return TIPO_CORTE
 
     return TIPO_SIN_CLASIFICAR
