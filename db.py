@@ -174,29 +174,19 @@ def obtener_parte_general_mas_reciente() -> dict | None:
             return _row_a_dict(row) if row else None
 
 
-def obtener_partes_por_zona(
-    provincia: str, municipio: str | None = None, limite: int = 20
-) -> list[dict]:
+def obtener_partes_por_provincia(provincia: str, limite: int = 20) -> list[dict]:
+    """
+    Últimos `limite` partes de una provincia (excluyendo el parte general
+    nacional, que se consulta aparte con obtener_parte_general_mas_reciente).
+    """
     with _conectar() as con:
         with con.cursor(row_factory=dict_row) as cur:
-            if municipio:
-                cur.execute(
-                    """
-                    SELECT * FROM partes
-                    WHERE provincia = %s
-                      AND (municipio = %s OR municipio IS NULL)
-                      AND tipo != 'general_nacional'
-                    ORDER BY fecha DESC LIMIT %s
-                    """,
-                    (provincia, municipio, limite),
-                )
-            else:
-                cur.execute(
-                    """
-                    SELECT * FROM partes
-                    WHERE provincia = %s AND tipo != 'general_nacional'
-                    ORDER BY fecha DESC LIMIT %s
-                    """,
-                    (provincia, limite),
-                )
+            cur.execute(
+                """
+                SELECT * FROM partes
+                WHERE provincia = %s AND tipo != 'general_nacional'
+                ORDER BY fecha DESC LIMIT %s
+                """,
+                (provincia, limite),
+            )
             return [_row_a_dict(r) for r in cur.fetchall()]

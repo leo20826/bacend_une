@@ -14,29 +14,33 @@ este archivo ni volver a subir código.
 import os
 
 # canal_username -> provincia (deben existir como keys en cuba_data del frontend)
+# Fuente: listado confirmado por el usuario (canales_UNE_Provincias.txt).
+# Pendientes sin canal confirmado todavía: Sancti Spíritus, Isla de la Juventud.
 CANALES_POR_PROVINCIA = {
     "EmpresaElectricaDeLaHabana": "La Habana",
-    # "EmpresaElectricaPinarDelRio": "Pinar del Río",
-    # "EmpresaElectricaArtemisa": "Artemisa",
-    # "EmpresaElectricaMayabeque": "Mayabeque",
-    # "EmpresaElectricaMatanzas": "Matanzas",
-    # "EmpresaElectricaVillaClara": "Villa Clara",
-    # "EmpresaElectricaCienfuegos": "Cienfuegos",
-    # "EmpresaElectricaSanctiSpiritus": "Sancti Spíritus",
-    # "EmpresaElectricaCiegoDeAvila": "Ciego de Ávila",
-    # "EmpresaElectricaCamaguey": "Camagüey",
-    # "EmpresaElectricaLasTunas": "Las Tunas",
-    # "EmpresaElectricaHolguin": "Holguín",
-    # "EmpresaElectricaGranma": "Granma",
-    # "EmpresaElectricaSantiagoDeCuba": "Santiago de Cuba",
-    # "EmpresaElectricaGuantanamo": "Guantánamo",
-    # "EmpresaElectricaIsladeLaJuventud": "Isla de la Juventud",
+    "EmpresaElectricaPROficial": "Pinar del Río",
+    "EEArtemisa": "Artemisa",
+    "electricamayabeque": "Mayabeque",
+    "EmpresaElectricaMatanzas": "Matanzas",
+    "electrico1895": "Villa Clara",
+    "empresaelectricacienfuegos1": "Cienfuegos",
+    # "TODO": "Sancti Spíritus",  # falta el canal
+    "eecav": "Ciego de Ávila",
+    "empresa_electrica": "Camagüey",
+    "eleclastunas": "Las Tunas",
+    "elecholguin": "Holguín",
+    "UNE_EEG": "Granma",
+    "electricastgo": "Santiago de Cuba",
+    "elecguantanamo": "Guantánamo",
+    # "TODO": "Isla de la Juventud",  # falta el canal
 }
 
 # Canal(es) donde se publica el parte general nacional de generación/déficit.
-CANALES_PARTE_NACIONAL = [
-    "UNElectrica",  # AJUSTAR: username real del canal nacional
-]
+# TODO: ninguno de los canales del listado por provincia parece ser este
+# (todos son de una provincia específica). Falta identificar el canal
+# nacional real de la UNE — hasta entonces, esta lista queda vacía para
+# no seguir intentando leer un username placeholder que no existe.
+CANALES_PARTE_NACIONAL: list[str] = []
 
 # Cada cuántos segundos el worker revisa los canales (ver conversación:
 # 3-5 min es razonable para no saturar y mantener info fresca).

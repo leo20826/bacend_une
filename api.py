@@ -10,7 +10,7 @@ Endpoints pensados para calzar directo con
 lib/services/api_service.dart del frontend Flutter:
 
   GET /api/parte-general
-  GET /api/partes?provincia=X&municipio=Y
+  GET /api/partes?provincia=X
 
 Correr con: uvicorn api:app --host 0.0.0.0 --port 8000
 (en Railway, el puerto lo da la variable de entorno $PORT, ver DEPLOY_RAILWAY.md)
@@ -88,11 +88,11 @@ def parte_general():
 
 
 @app.get("/api/partes")
-def partes_por_zona(
+def partes_por_provincia(
     provincia: str = Query(...),
-    municipio: str | None = Query(default=None),
+    limite: int = Query(default=20, le=50),
 ):
-    return db.obtener_partes_por_zona(provincia=provincia, municipio=municipio)
+    return db.obtener_partes_por_provincia(provincia=provincia, limite=limite)
 
 
 @app.get("/api/health")

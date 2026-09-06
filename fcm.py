@@ -75,7 +75,7 @@ def enviar_a_topic(topic: str, titulo: str, cuerpo: str):
         logger.exception("Error enviando push al topic %s", topic)
 
 
-def notificar_parte_nuevo(*, provincia: str, municipio: str | None, tipo: str, resumen: str):
+def notificar_parte_nuevo(*, provincia: str, tipo: str, resumen: str):
     if tipo == "general_nacional":
         enviar_a_topic("nacional", "Parte eléctrico nacional", resumen)
         return
@@ -92,5 +92,3 @@ def notificar_parte_nuevo(*, provincia: str, municipio: str | None, tipo: str, r
         titulo = "Aviso del servicio eléctrico"
 
     enviar_a_topic(f"provincia_{normalizar_topic(provincia)}", titulo, resumen)
-    if municipio:
-        enviar_a_topic(f"municipio_{normalizar_topic(municipio)}", titulo, resumen)

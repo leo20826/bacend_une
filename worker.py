@@ -3,11 +3,8 @@ Loop principal del backend. Cada INTERVALO_POLLING_SEGUNDOS:
   1. Revisa cada canal configurado.
   2. Descarta mensajes ya procesados (tabla mensajes_procesados).
   3. Parsea los nuevos.
-  4. Detecta qué municipio(s) menciona (si aplica).
-  5. Guarda en la tabla `partes` (una fila por municipio detectado,
-     o una sola fila con municipio=NULL si no se detectó ninguno,
-     lo que significa "aplica a toda la provincia").
-  6. Publica push a los topics correspondientes.
+  4. Guarda en la tabla `partes`, asociado a la provincia del canal.
+  5. Publica push al topic de la provincia (y al nacional si aplica).
 
 Corre esto con: python worker.py
 En producción, esto debería vivir en un proceso persistente (systemd,
@@ -16,7 +13,6 @@ Docker, un servicio en la nube), no solo lanzarse manualmente.
 
 import time
 import logging
-import uuid
 
 from config import (
     CANALES_POR_PROVINCIA,
@@ -25,7 +21,6 @@ from config import (
 )
 from scraper import obtener_mensajes
 from parser import parse_mensaje, TIPO_GENERAL_NACIONAL
-from municipios_cuba import detectar_municipios
 import db
 import fcm
 
@@ -65,81 +60,43 @@ def _procesar_canal(canal: str, provincia: str | None):
         nuevos += 1
 
         parte = parse_mensaje(msg.texto)
+        provincia_del_parte = (
+            "Nacional" if parte.tipo == TIPO_GENERAL_NACIONAL else provincia
+        )
 
-        if parte.tipo == TIPO_GENERAL_NACIONAL:
-            _guardar_y_notificar(
-                parte=parte,
-                canal=canal,
-                provincia="Nacional",
-                municipio=None,
-                fecha=msg.fecha,
-                message_id=msg.message_id,
-            )
-        else:
-            municipios_detectados = (
-                detectar_municipios(provincia, msg.texto) if provincia else []
-            )
-            if municipios_detectados:
-                for municipio in municipios_detectados:
-                    _guardar_y_notificar(
-                        parte=parte,
-                        canal=canal,
-                        provincia=provincia,
-                        municipio=municipio,
-                        fecha=msg.fecha,
-                        message_id=msg.message_id,
-                        sufijo_id=municipio,
-                    )
-            else:
-                # No se detectó municipio específico: aplica a toda la
-                # provincia (mejor mostrarlo igual que perder el dato).
-                _guardar_y_notificar(
-                    parte=parte,
-                    canal=canal,
-                    provincia=provincia,
-                    municipio=None,
-                    fecha=msg.fecha,
-                    message_id=msg.message_id,
-                )
+        db.guardar_parte(
+            id_=msg.message_id,
+            canal=canal,
+            provincia=provincia_del_parte,
+            municipio=None,
+            tipo=parte.tipo,
+            fecha=msg.fecha,
+            texto_crudo=parte.texto_crudo,
+            subestacion=parte.subestacion,
+            circuitos=[
+                {"codigo": c.codigo, "zonas": c.zonas} for c in parte.circuitos
+            ],
+            deficit_mw=parte.deficit_mw,
+            disponibilidad_mw=parte.disponibilidad_mw,
+            demanda_mw=parte.demanda_mw,
+        )
+
+        fcm.notificar_parte_nuevo(
+            provincia=provincia_del_parte,
+            tipo=parte.tipo,
+            resumen=_resumen_para_notificacion(parte),
+        )
+
+        logger.info(
+            "Guardado parte %s (%s) tipo=%s",
+            msg.message_id, provincia_del_parte, parte.tipo,
+        )
 
         db.marcar_procesado(canal, msg.message_id)
 
     logger.info(
         "Canal %s: %d mensajes revisados, %d nuevos procesados.",
         canal, len(mensajes), nuevos,
-    )
-
-
-def _guardar_y_notificar(
-    *, parte, canal, provincia, municipio, fecha, message_id, sufijo_id=None
-):
-    id_parte = f"{message_id}_{sufijo_id}" if sufijo_id else message_id
-
-    db.guardar_parte(
-        id_=id_parte,
-        canal=canal,
-        provincia=provincia,
-        municipio=municipio,
-        tipo=parte.tipo,
-        fecha=fecha,
-        texto_crudo=parte.texto_crudo,
-        subestacion=parte.subestacion,
-        circuitos=[{"codigo": c.codigo, "zonas": c.zonas} for c in parte.circuitos],
-        deficit_mw=parte.deficit_mw,
-        disponibilidad_mw=parte.disponibilidad_mw,
-        demanda_mw=parte.demanda_mw,
-    )
-
-    fcm.notificar_parte_nuevo(
-        provincia=provincia,
-        municipio=municipio,
-        tipo=parte.tipo,
-        resumen=_resumen_para_notificacion(parte),
-    )
-
-    logger.info(
-        "Guardado parte %s (%s / %s) tipo=%s",
-        id_parte, provincia, municipio or "-", parte.tipo,
     )
 
 
