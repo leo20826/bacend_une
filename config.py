@@ -23,9 +23,13 @@ CANALES_POR_PROVINCIA = {
     "electricamayabeque": "Mayabeque",
     "EmpresaElectricaMatanzas": "Matanzas",
     "electrico1895": "Villa Clara",
-    "empresaelectricacienfuegos1": "Cienfuegos",
+    # "empresaelectricacienfuegos1": "Cienfuegos",  # PENDIENTE: canal con
+    #   "restringir guardar contenido" activado — la vista pública t.me/s/
+    #   no muestra mensajes. Requeriría leer con una cuenta real (Telethon),
+    #   decidido posponer por ahora.
     # "TODO": "Sancti Spíritus",  # falta el canal
-    "eecav": "Ciego de Ávila",
+    # "eecav": "Ciego de Ávila",  # PENDIENTE: mismo caso que Cienfuegos
+    #   (contenido protegido, requiere cuenta real para leerlo).
     "empresa_electrica": "Camagüey",
     "eleclastunas": "Las Tunas",
     "elecholguin": "Holguín",

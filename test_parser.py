@@ -33,6 +33,14 @@ EJEMPLO_RESTABLECIMIENTO_REPARACION = (
     "✅Consumidores del municipio Boyeros, queda repara la Avería Secundaria "
     "por Transformador Dañado en:\n\n👉 4ta e/ Trébol y L"
 )
+EJEMPLO_RESTABLECIMIENTO_CON_SERVICIO = (
+    "💡Con servicio eléctrico el siguiente circuito:\n🔹Municipio Santa Clara:"
+    "\n👉Cto 132 Santa Clara Industrial"
+)
+EJEMPLO_CORTE_MANIPULACION = (
+    "🛠️Afectado por manipulación Cto 166 Condado, perteneciente al Municipio "
+    "Santa Clara, para reponer transformador esquelético"
+)
 
 
 def probar(nombre, texto):
@@ -83,5 +91,11 @@ if __name__ == "__main__":
 
     r8 = probar("RESTABLECIMIENTO - reparación (caso real)", EJEMPLO_RESTABLECIMIENTO_REPARACION)
     assert r8.tipo == TIPO_RESTABLECIMIENTO
+
+    r9 = probar("RESTABLECIMIENTO - con servicio eléctrico (caso real Villa Clara)", EJEMPLO_RESTABLECIMIENTO_CON_SERVICIO)
+    assert r9.tipo == TIPO_RESTABLECIMIENTO
+
+    r10 = probar("CORTE - manipulación (caso real Villa Clara)", EJEMPLO_CORTE_MANIPULACION)
+    assert r10.tipo == TIPO_CORTE
 
     print("\n✅ Todas las pruebas pasaron.")

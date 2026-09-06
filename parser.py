@@ -84,23 +84,29 @@ def _clasificar(texto: str) -> str:
         "restablecido", "restablecimiento", "restablece", "queda repara",
         "quedó reparad", "reparada", "reparado", "resuelta la avería",
         "resuelta la averia", "solucionada", "normalizado el servicio",
+        "con servicio eléctrico", "con servicio electrico",
     )
     if any(p in t for p in palabras_restablecido):
         return TIPO_RESTABLECIMIENTO
 
     # Señales de CORTE: el vocabulario real del canal es más variado que
     # solo "🛑circuitos afectados" — incluye avisos de disparo, avería,
-    # afectación puntual, déficit de generación como causa, etc.
+    # afectación puntual, déficit de generación como causa, manipulación
+    # (trabajos/mantenimiento) que deja el circuito sin servicio, etc.
     palabras_corte = (
         "circuitos afectados", "se afecta", "se afectó", "afecta el servicio",
-        "afectan por disparo", "disparo del circuito", "disparo automático",
-        "disparo automatico", "por avería", "por averia",
+        "afectan por disparo", "afectado por disparo", "disparo del circuito",
+        "disparo automático", "disparo automatico", "por avería", "por averia",
         "déficit de generación", "deficit de generacion",
+        "por manipulación", "por manipulacion", "afectado por manipulación",
     )
     if "🛑" in texto or any(p in t for p in palabras_corte):
         return TIPO_CORTE
 
-    if "⚠️" in texto or "⚡" in texto or "🚨" in texto or "🚧" in texto:
+    if (
+        "⚠️" in texto or "⚡" in texto or "🚨" in texto or "🚧" in texto
+        or "🛠️" in texto
+    ):
         # Tiene emojis típicos de aviso pero no matcheó ninguna frase
         # conocida arriba; se trata como corte por defecto (es el caso
         # más común en este canal), pero el texto crudo queda disponible
